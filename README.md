@@ -8,7 +8,7 @@
 START → story_node (LLM завязка → interrupt → resume → LLM концовка)
 ```
 
-- **Состояние** (`state.py`): `TypedDict` с полями `topic`, `intro_text`, `choices`, `user_choice`, `ending_text`.
+- **Состояние** (`state.py`): `TypedDict` с полями `topic`, `scene_text`, `choices`, `user_choice`, `ending`.
 - **Узел** (`nodes.py`): единый узел `story_node`, который:
   1. Вызывает LLM для генерации завязки и 3 вариантов.
   2. Делает `interrupt()` с вопросом и вариантами.
