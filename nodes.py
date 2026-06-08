@@ -26,7 +26,7 @@ INTRO_PROMPT_TEMPLATE = """Ты — автор интерактивной мин
 Не добавляй ничего лишнего."""
 
 ENDING_PROMPT_TEMPLATE = """Ты — автор интерактивной мини-истории.
-Завязка: {intro_text}
+Завязка: {scene_text}
 Выбор пользователя: {user_choice}
 
 Допиши короткую концовку (2–3 предложения) с учётом выбора героя.
@@ -40,14 +40,14 @@ def _parse_intro_response(response_text: str) -> tuple[str, list[str]]:
     """Разобрать ответ LLM на завязку и список вариантов."""
     lines = response_text.strip().splitlines()
 
-    intro = ""
+    scene = ""
     choices: list[str] = []
 
     in_choices = False
     for line in lines:
         stripped = line.strip()
         if stripped.startswith("ЗАВЯЗКА:"):
-            intro = stripped.replace("ЗАВЯЗКА:", "", 1).strip()
+            scene = stripped.replace("ЗАВЯЗКА:", "", 1).strip()
             in_choices = False
         elif stripped.startswith("ВАРИАНТЫ:"):
             in_choices = True
@@ -68,10 +68,10 @@ def _parse_intro_response(response_text: str) -> tuple[str, list[str]]:
             "Подождать",
         ]
 
-    if not intro:
-        intro = "Герой стоит перед выбором."
+    if not scene:
+        scene = "Герой стоит перед выбором."
 
-    return intro, choices
+    return scene, choices
 
 
 def _get_llm() -> ChatOpenAI:
@@ -98,12 +98,12 @@ def story_node(state: StoryState) -> dict[str, Any]:
     # --- Шаг 1: Генерация завязки ---
     intro_prompt = INTRO_PROMPT_TEMPLATE.format(topic=topic)
     intro_response = llm.invoke(intro_prompt)
-    intro_text, choices = _parse_intro_response(intro_response.content)
+    scene_text, choices = _parse_intro_response(intro_response.content)
 
     # --- Шаг 2: Прерывание для выбора пользователя ---
     interrupt_payload = {
         "type": "choice",
-        "question": f"{intro_text}\n\nЧто делаем?",
+        "question": f"{scene_text}\n\nЧто делаем?",
         "choices": choices,
     }
 
@@ -115,16 +115,16 @@ def story_node(state: StoryState) -> dict[str, Any]:
 
     # --- Шаг 3: Генерация концовки ---
     ending_prompt = ENDING_PROMPT_TEMPLATE.format(
-        intro_text=intro_text,
+        scene_text=scene_text,
         user_choice=user_choice,
     )
     ending_response = llm.invoke(ending_prompt)
-    ending_text = ending_response.content.strip()
+    ending = ending_response.content.strip()
 
     # --- Возврат обновлённого состояния ---
     return {
-        "intro_text": intro_text,
+        "scene_text": scene_text,
         "choices": choices,
         "user_choice": user_choice,
-        "ending_text": ending_text,
+        "ending": ending,
     }
