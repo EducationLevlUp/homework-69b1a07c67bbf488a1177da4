@@ -35,7 +35,7 @@ def get_topic() -> str:
 # Сборка графа
 # ---------------------------------------------------------------------------
 
-def build_graph() -> StateGraph:
+def build_graph():
     """Собрать и скомпилировать граф с чекпоинтером."""
     checkpointer = InMemorySaver()
 
@@ -59,10 +59,10 @@ def main() -> None:
     config = {"configurable": {"thread_id": "story_session_1"}}
     initial_state: StoryState = {
         "topic": topic,
-        "intro_text": "",
+        "scene_text": "",
         "choices": [],
         "user_choice": "",
-        "ending_text": "",
+        "ending": "",
     }
 
     print(f"Тема: {topic}\n")
@@ -76,7 +76,9 @@ def main() -> None:
             question = interrupt_value.get("question", "Что делаем?")
             choices = interrupt_value.get("choices", [])
 
-            print(f"[LLM] {question.split(chr(10))[0]}")
+            # Выводим полный текст завязки (первая строка вопроса до пустой строки)
+            scene_line = question.split("\n\n")[0]
+            print(f"[LLM] {scene_line}")
             print()
 
             # --- Выбор пользователя через questionary ---
@@ -108,8 +110,8 @@ def main() -> None:
                     # chunk — это словарь вида {"node_name": updated_state}
                     for node_name, node_output in chunk.items():
                         if node_name != "__interrupt__" and isinstance(node_output, dict):
-                            intro = node_output.get("intro_text", "")
-                            ending = node_output.get("ending_text", "")
+                            scene = node_output.get("scene_text", "")
+                            ending = node_output.get("ending", "")
                             user_choice = node_output.get("user_choice", "")
 
                             if ending:
@@ -120,7 +122,7 @@ def main() -> None:
                             print("ИТОГОВАЯ ИСТОРИЯ")
                             print("=" * 50)
                             print(f"Тема: {topic}")
-                            print(f"\nЗавязка:\n{intro}")
+                            print(f"\nЗавязка:\n{scene}")
                             print(f"\nВыбор: {user_choice}")
                             print(f"\nКонцовка:\n{ending}")
                             print("=" * 50)
