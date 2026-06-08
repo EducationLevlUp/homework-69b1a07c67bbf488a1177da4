@@ -27,7 +27,10 @@ DEFAULT_TOPIC = "космический кот"
 def get_topic() -> str:
     """Получить тему из аргументов командной строки или использовать дефолтную."""
     if len(sys.argv) > 1:
-        return " ".join(sys.argv[1:])
+        topic = " ".join(sys.argv[1:])
+        if not topic.strip():
+            return DEFAULT_TOPIC
+        return topic.strip()
     return DEFAULT_TOPIC
 
 
